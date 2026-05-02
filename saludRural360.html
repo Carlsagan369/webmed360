@@ -1,0 +1,1025 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SaludRural 360 | Telemedicina Rural</title>
+    <style>
+        :root {
+            --azul: #0d47a1; --azul-claro: #1565c0; --azul-suave: #e3f2fd;
+            --blanco: #ffffff; --gris: #f5f7fa; --borde: #dce3ea;
+            --texto: #4a5568; --oscuro: #2d3748; --verde: #2e7d32;
+            --naranja: #e65100; --rojo: #c62828; --sombra: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: #e8edf5;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            padding: 20px;
+            color: var(--oscuro);
+        }
+        .container { width: 100%; max-width: 1000px; }
+        .header {
+            background: var(--blanco); border-radius: 12px;
+            padding: 16px 24px; margin-bottom: 16px;
+            box-shadow: var(--sombra); display: flex;
+            align-items: center; justify-content: space-between;
+            flex-wrap: wrap; gap: 12px;
+        }
+        .logo { display: flex; align-items: center; gap: 10px; }
+        .logo-icon {
+            width: 40px; height: 40px; background: var(--azul);
+            border-radius: 10px; display: flex; align-items: center;
+            justify-content: center; color: #fff; font-size: 20px;
+        }
+        .logo h2 { font-size: 1.1rem; color: var(--azul); }
+        .logo span { font-size: 0.65rem; color: var(--texto); text-transform: uppercase; }
+        .user-info { display: flex; align-items: center; gap: 10px; }
+        .user-badge {
+            background: var(--azul-suave); padding: 6px 12px;
+            border-radius: 20px; font-weight: 600; font-size: 0.8rem;
+        }
+        .btn {
+            padding: 8px 16px; border-radius: 20px; border: none;
+            font-weight: 600; font-size: 0.8rem; cursor: pointer;
+            transition: 0.2s; display: inline-flex; align-items: center; gap: 5px;
+        }
+        .btn:hover { transform: translateY(-1px); opacity: 0.9; }
+        .btn-azul { background: var(--azul); color: #fff; }
+        .btn-rojo { background: #fff; color: var(--rojo); border: 2px solid var(--rojo); }
+        .btn-verde { background: var(--verde); color: #fff; }
+        .btn-amarillo { background: #f9a825; color: #000; font-weight: 700; }
+        .card {
+            background: var(--blanco); border-radius: 12px;
+            padding: 20px; box-shadow: var(--sombra); margin-bottom: 16px;
+        }
+        .tabs { display: flex; gap: 2px; margin-bottom: 16px; flex-wrap: wrap; }
+        .tab {
+            padding: 8px 16px; border: none; background: transparent;
+            cursor: pointer; font-weight: 600; font-size: 0.8rem;
+            color: var(--texto); border-bottom: 3px solid transparent;
+            transition: 0.2s;
+        }
+        .tab:hover { color: var(--azul); background: var(--gris); }
+        .tab.active { color: var(--azul); border-bottom-color: var(--azul); background: var(--azul-suave); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .form-group { margin-bottom: 12px; }
+        .form-group label { display: block; font-size: 0.8rem; font-weight: 600; margin-bottom: 4px; }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%; padding: 10px 14px; border: 2px solid var(--borde);
+            border-radius: 8px; font-size: 0.9rem; background: var(--gris);
+            transition: 0.2s;
+        }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            outline: none; border-color: var(--azul-claro); background: #fff;
+        }
+        .lista { max-height: 400px; overflow-y: auto; }
+        .lista-item {
+            display: flex; align-items: center; gap: 10px;
+            padding: 12px; border: 1px solid var(--borde);
+            border-radius: 8px; margin-bottom: 8px; transition: 0.2s;
+            flex-wrap: wrap;
+        }
+        .lista-item:hover { background: var(--gris); }
+        .badge {
+            font-size: 0.65rem; font-weight: 700; padding: 4px 10px;
+            border-radius: 12px; text-transform: uppercase;
+        }
+        .badge-pendiente { background: #fff3e0; color: var(--naranja); }
+        .badge-confirmada { background: #e8f5e9; color: var(--verde); }
+        .toast {
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+            background: #333; color: #fff; padding: 12px 24px;
+            border-radius: 24px; font-weight: 600; font-size: 0.85rem;
+            z-index: 9999; display: none; max-width: 90vw; text-align: center;
+        }
+        .toast.show { display: block; }
+        .toast.success { background: #2e7d32; }
+        .toast.error { background: #c62828; }
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.6); z-index: 999;
+            display: none; align-items: center; justify-content: center;
+        }
+        .modal-overlay.show { display: flex; }
+        .modal {
+            background: #fff; border-radius: 12px; padding: 24px;
+            width: 90%; max-width: 600px; max-height: 80vh; overflow-y: auto;
+        }
+        .modal-header {
+            display: flex; justify-content: space-between;
+            align-items: center; margin-bottom: 16px;
+        }
+        .modal-close {
+            width: 30px; height: 30px; border-radius: 50%;
+            border: none; background: #f0f0f0; cursor: pointer; font-size: 1.2rem;
+        }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        @media (max-width: 600px) { .grid-2 { grid-template-columns: 1fr; } }
+        .empty { text-align: center; padding: 30px; color: #999; }
+        .highlight {
+            background: #f5f7fa; border-left: 4px solid var(--azul);
+            padding: 12px; margin: 8px 0; border-radius: 0 8px 8px 0;
+        }
+        .receta-box {
+            background: #fafafa; border: 1px solid #ddd;
+            border-radius: 8px; padding: 12px; margin: 8px 0;
+            white-space: pre-wrap; font-family: monospace; font-size: 0.85rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- LOGIN -->
+        <div id="loginScreen">
+            <div class="card" style="max-width:450px;margin:0 auto;">
+                <div style="text-align:center;margin-bottom:16px;">
+                    <div class="logo-icon" style="margin:0 auto 8px;">🏥</div>
+                    <h2>SaludRural 360</h2>
+                    <p style="font-size:0.8rem;color:#666;">Plataforma de Telemedicina Rural</p>
+                </div>
+                <div class="tabs" id="loginTabs">
+                    <button class="tab active" onclick="cambiarTabLogin('login')">🔑 Iniciar Sesión</button>
+                    <button class="tab" onclick="cambiarTabLogin('registro')">📝 Crear Cuenta</button>
+                    <button class="tab" onclick="cambiarTabLogin('admin')">🔧 Admin</button>
+                </div>
+                
+                <div id="tab-login" class="tab-content active">
+                    <form onsubmit="iniciarSesion(event)">
+                        <div class="form-group"><label>Correo Electrónico</label><input type="email" id="loginEmail" required placeholder="correo@ejemplo.com"></div>
+                        <div class="form-group"><label>Contraseña</label><input type="password" id="loginPass" required placeholder="••••••"></div>
+                        <button type="submit" class="btn btn-azul" style="width:100%;">Ingresar</button>
+                    </form>
+                    <p style="text-align:center;margin-top:10px;font-size:0.7rem;">Demo: medico@rural.com / paciente@rural.com<br>Pass: 123456</p>
+                </div>
+                
+                <div id="tab-registro" class="tab-content">
+                    <form onsubmit="registrarUsuario(event)">
+                        <div class="form-group"><label>Tipo de Cuenta</label><select id="regRol" onchange="cambiarCamposRegistro()" required><option value="">Seleccione...</option><option value="medico">Médico</option><option value="paciente">Paciente</option></select></div>
+                        <div class="form-group"><label>Nombre Completo</label><input type="text" id="regNombre" required></div>
+                        <div class="form-group"><label>Correo Electrónico</label><input type="email" id="regEmail" required></div>
+                        <div class="form-group"><label>Teléfono</label><input type="tel" id="regTelefono" required></div>
+                        <div class="form-group"><label>Contraseña</label><input type="password" id="regPass" required minlength="6"></div>
+                        <div id="camposMedico" style="display:none;">
+                            <div class="form-group"><label>Especialidad</label><select id="regEspecialidad"><option>Medicina General</option><option>Cardiología</option><option>Neumología</option><option>Dermatología</option><option>Pediatría</option><option>Medicina Interna</option></select></div>
+                            <div class="form-group"><label>Departamento</label><input type="text" id="regUbicacionMedico"></div>
+                        </div>
+                        <div id="camposPaciente" style="display:none;">
+                            <div class="form-group"><label>Documento ID</label><input type="text" id="regDoc"></div>
+                            <div class="form-group"><label>Fecha Nacimiento</label><input type="date" id="regFechaNac"></div>
+                            <div class="form-group"><label>Departamento</label><input type="text" id="regUbicacionPaciente"></div>
+                        </div>
+                        <button type="submit" class="btn btn-verde" style="width:100%;">Crear Cuenta</button>
+                    </form>
+                </div>
+                
+                <div id="tab-admin" class="tab-content">
+                    <form onsubmit="loginAdmin(event)">
+                        <div class="form-group"><label>Admin ID</label><input type="text" id="adminId" required></div>
+                        <div class="form-group"><label>Contraseña</label><input type="password" id="adminPass" required></div>
+                        <button type="submit" class="btn btn-amarillo" style="width:100%;">Acceso Admin</button>
+                    </form>
+                    <p style="text-align:center;margin-top:10px;font-size:0.7rem;">Admin: admin@rural360.com / 123456</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- PANEL PRINCIPAL -->
+        <div id="mainScreen" style="display:none;">
+            <div class="header">
+                <div class="logo">
+                    <div class="logo-icon">🏥</div>
+                    <div><h2>SaludRural 360</h2><span id="rolHeader">Plataforma</span></div>
+                </div>
+                <div class="user-info">
+                    <div class="user-badge" id="userName">Usuario</div>
+                    <button class="btn btn-rojo" onclick="cerrarSesion()">🚪 Salir</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="tabs" id="mainTabs">
+                    <button class="tab active" onclick="cambiarTab('citas')">📅 Citas</button>
+                    <button class="tab" onclick="cambiarTab('consultas')">📋 Consultas</button>
+                    <button class="tab" onclick="cambiarTab('laboratorios')">🧪 Laboratorios</button>
+                    <button class="tab" onclick="cambiarTab('recetas')">💊 Recetas</button>
+                    <button class="tab" onclick="cambiarTab('perfil')">👤 Perfil</button>
+                    <button class="tab" onclick="cambiarTab('adminPanel')" id="tabAdminBtn" style="display:none;">🔧 Admin</button>
+                </div>
+
+                <div id="panel-citas" class="tab-content active">
+                    <h3>📅 Sistema de Citas</h3>
+                    <button class="btn btn-azul" id="btnAgendarCita" onclick="agendarCita()" style="margin:10px 0;">+ Nueva Cita</button>
+                    <div class="lista" id="listaCitas"></div>
+                </div>
+                
+                <div id="panel-consultas" class="tab-content">
+                    <h3>📋 Consultas Médicas</h3>
+                    <button class="btn btn-azul" id="btnNuevaConsulta" onclick="nuevaConsulta()" style="margin:10px 0;">+ Nueva Consulta</button>
+                    <div class="lista" id="listaConsultas"></div>
+                </div>
+                
+                <div id="panel-laboratorios" class="tab-content">
+                    <h3>🧪 Laboratorios</h3>
+                    <button class="btn btn-azul" id="btnSubirLab" onclick="subirLaboratorio()" style="margin:10px 0;">+ Cargar Laboratorio</button>
+                    <div class="lista" id="listaLaboratorios"></div>
+                </div>
+                
+                <div id="panel-recetas" class="tab-content">
+                    <h3>💊 Recetas Médicas</h3>
+                    <div class="lista" id="listaRecetas"></div>
+                </div>
+                
+                <div id="panel-perfil" class="tab-content">
+                    <h3>👤 Perfil</h3>
+                    <div id="perfilInfo"></div>
+                </div>
+                
+                <div id="panel-adminPanel" class="tab-content">
+                    <h3>🔧 Panel de Administración</h3>
+                    <button class="btn btn-azul" onclick="adminCrearUsuario()">+ Crear Usuario</button>
+                    <button class="btn btn-rojo" onclick="adminReiniciarDB()" style="margin-left:8px;">🔄 Reiniciar DB</button>
+                    <div class="lista" id="listaAdminUsuarios" style="margin-top:10px;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal" id="modalContent"></div>
+    </div>
+
+    <script>
+        // ===== BASE DE DATOS =====
+        const DB_NAME = 'SaludRural360';
+        let db;
+        let usuarioActual = null;
+        let esAdmin = false;
+
+        function abrirDB() {
+            return new Promise((res, rej) => {
+                const req = indexedDB.open(DB_NAME, 2);
+                req.onupgradeneeded = (e) => {
+                    const d = e.target.result;
+                    if (!d.objectStoreNames.contains('usuarios')) {
+                        const s = d.createObjectStore('usuarios', { keyPath: 'id', autoIncrement: true });
+                        s.createIndex('email', 'email', { unique: true });
+                    }
+                    if (!d.objectStoreNames.contains('citas')) {
+                        d.createObjectStore('citas', { keyPath: 'id', autoIncrement: true });
+                    }
+                    if (!d.objectStoreNames.contains('consultas')) {
+                        d.createObjectStore('consultas', { keyPath: 'id', autoIncrement: true });
+                    }
+                    if (!d.objectStoreNames.contains('laboratorios')) {
+                        d.createObjectStore('laboratorios', { keyPath: 'id', autoIncrement: true });
+                    }
+                    if (!d.objectStoreNames.contains('recetas')) {
+                        d.createObjectStore('recetas', { keyPath: 'id', autoIncrement: true });
+                    }
+                };
+                req.onsuccess = (e) => { db = e.target.result; res(db); };
+                req.onerror = () => rej(req.error);
+            });
+        }
+
+        function dbAdd(store, obj) {
+            return new Promise((res, rej) => {
+                const tx = db.transaction([store], 'readwrite');
+                const r = tx.objectStore(store).add(obj);
+                r.onsuccess = () => res(r.result);
+                r.onerror = () => rej(r.error);
+            });
+        }
+
+        function dbPut(store, obj) {
+            return new Promise((res, rej) => {
+                const tx = db.transaction([store], 'readwrite');
+                const r = tx.objectStore(store).put(obj);
+                r.onsuccess = () => res(r.result);
+                r.onerror = () => rej(r.error);
+            });
+        }
+
+        function dbGetAll(store) {
+            return new Promise((res, rej) => {
+                const tx = db.transaction([store], 'readonly');
+                const r = tx.objectStore(store).getAll();
+                r.onsuccess = () => res(r.result || []);
+                r.onerror = () => rej(r.error);
+            });
+        }
+
+        function dbGet(store, id) {
+            return new Promise((res, rej) => {
+                const tx = db.transaction([store], 'readonly');
+                const r = tx.objectStore(store).get(id);
+                r.onsuccess = () => res(r.result);
+                r.onerror = () => rej(r.error);
+            });
+        }
+
+        function dbDelete(store, id) {
+            return new Promise((res, rej) => {
+                const tx = db.transaction([store], 'readwrite');
+                const r = tx.objectStore(store).delete(id);
+                r.onsuccess = () => res();
+                r.onerror = () => rej(r.error);
+            });
+        }
+
+        function dbGetByIndex(store, index, value) {
+            return new Promise((res, rej) => {
+                const tx = db.transaction([store], 'readonly');
+                const r = tx.objectStore(store).index(index).getAll(value);
+                r.onsuccess = () => res(r.result || []);
+                r.onerror = () => rej(r.error);
+            });
+        }
+
+        // ===== UTILIDADES =====
+        function toast(msg, tipo = '') {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.className = 'toast show ' + tipo;
+            setTimeout(() => { t.className = 'toast'; }, 3000);
+        }
+
+        function mostrarModal(html) {
+            document.getElementById('modalContent').innerHTML = html;
+            document.getElementById('modalOverlay').classList.add('show');
+        }
+        function cerrarModal() {
+            document.getElementById('modalOverlay').classList.remove('show');
+        }
+
+        function esc(t) {
+            if (!t) return '';
+            const d = document.createElement('div');
+            d.textContent = t;
+            return d.innerHTML;
+        }
+
+        function fecha(d) {
+            if (!d) return '—';
+            return new Date(d).toLocaleDateString('es-CO', {
+                day: 'numeric', month: 'short', year: 'numeric',
+                hour: '2-digit', minute: '2-digit'
+            });
+        }
+
+        // ===== NAVEGACIÓN =====
+        function cambiarTabLogin(tab) {
+            document.querySelectorAll('#loginScreen .tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('#loginScreen .tab-content').forEach(c => c.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById('tab-' + tab).classList.add('active');
+        }
+
+        function cambiarTab(tab) {
+            document.querySelectorAll('#mainTabs .tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('#mainScreen .tab-content').forEach(c => c.classList.remove('active'));
+            event.target.classList.add('active');
+            const panel = document.getElementById('panel-' + tab);
+            if (panel) panel.classList.add('active');
+            // Recargar datos según la pestaña
+            if (tab === 'citas') cargarCitas();
+            if (tab === 'consultas') cargarConsultas();
+            if (tab === 'laboratorios') cargarLaboratorios();
+            if (tab === 'recetas') cargarRecetas();
+            if (tab === 'perfil') cargarPerfil();
+            if (tab === 'adminPanel') cargarAdminUsuarios();
+        }
+
+        // ===== CAMBIAR CAMPOS REGISTRO =====
+        function cambiarCamposRegistro() {
+            const rol = document.getElementById('regRol').value;
+            document.getElementById('camposMedico').style.display = rol === 'medico' ? 'block' : 'none';
+            document.getElementById('camposPaciente').style.display = rol === 'paciente' ? 'block' : 'none';
+        }
+
+        // ===== REGISTRO =====
+        async function registrarUsuario(e) {
+            e.preventDefault();
+            const rol = document.getElementById('regRol').value;
+            const nombre = document.getElementById('regNombre').value.trim();
+            const email = document.getElementById('regEmail').value.trim().toLowerCase();
+            const telefono = document.getElementById('regTelefono').value.trim();
+            const pass = document.getElementById('regPass').value;
+
+            if (!rol || !nombre || !email || !telefono || !pass) {
+                return toast('Complete todos los campos', 'error');
+            }
+            if (pass.length < 6) return toast('Contraseña mínimo 6 caracteres', 'error');
+
+            const existentes = await dbGetByIndex('usuarios', 'email', email);
+            if (existentes.length > 0) return toast('Este correo ya está registrado', 'error');
+
+            const usuario = {
+                nombre, email, telefono, password: pass, rol,
+                fechaRegistro: new Date().toISOString()
+            };
+            if (rol === 'medico') {
+                usuario.especialidad = document.getElementById('regEspecialidad').value;
+                usuario.ubicacion = document.getElementById('regUbicacionMedico').value.trim();
+            } else {
+                usuario.docPaciente = document.getElementById('regDoc').value.trim();
+                usuario.fechaNac = document.getElementById('regFechaNac').value;
+                usuario.ubicacion = document.getElementById('regUbicacionPaciente').value.trim();
+            }
+            await dbAdd('usuarios', usuario);
+            toast('✅ Cuenta creada exitosamente', 'success');
+            document.querySelector('#loginTabs .tab:nth-child(1)').click();
+            document.getElementById('loginEmail').value = email;
+            document.getElementById('loginPass').value = '';
+        }
+
+        // ===== INICIAR SESIÓN =====
+        async function iniciarSesion(e) {
+            e.preventDefault();
+            const email = document.getElementById('loginEmail').value.trim().toLowerCase();
+            const pass = document.getElementById('loginPass').value;
+            if (!email || !pass) return toast('Ingrese credenciales', 'error');
+
+            const usuarios = await dbGetByIndex('usuarios', 'email', email);
+            if (usuarios.length === 0 || usuarios[0].password !== pass) {
+                return toast('❌ Credenciales incorrectas', 'error');
+            }
+            usuarioActual = usuarios[0];
+            esAdmin = false;
+            mostrarPanelPrincipal();
+        }
+
+        // ===== LOGIN ADMIN =====
+        async function loginAdmin(e) {
+            e.preventDefault();
+            const id = document.getElementById('adminId').value.trim();
+            const pass = document.getElementById('adminPass').value.trim();
+            if (id === 'admin@rural360.com' && pass === '123456') {
+                usuarioActual = {
+                    id: 0,
+                    nombre: 'Administrador',
+                    email: 'admin@rural360.com',
+                    rol: 'admin',
+                    telefono: '000'
+                };
+                esAdmin = true;
+                mostrarPanelPrincipal();
+            } else {
+                toast('❌ Credenciales de admin incorrectas', 'error');
+            }
+        }
+
+        function mostrarPanelPrincipal() {
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('mainScreen').style.display = 'block';
+            document.getElementById('userName').textContent = '👤 ' + usuarioActual.nombre;
+            document.getElementById('rolHeader').textContent = esAdmin ? '🔧 Administrador' :
+                usuarioActual.rol === 'medico' ? 'Portal Médico' : 'Portal Paciente';
+
+            // Mostrar/ocultar botones según rol
+            const btnCita = document.getElementById('btnAgendarCita');
+            const btnConsulta = document.getElementById('btnNuevaConsulta');
+            const btnLab = document.getElementById('btnSubirLab');
+            const tabAdmin = document.getElementById('tabAdminBtn');
+
+            if (esAdmin) {
+                if (btnCita) btnCita.style.display = 'none';
+                if (btnConsulta) btnConsulta.style.display = 'none';
+                if (btnLab) btnLab.style.display = 'none';
+                if (tabAdmin) tabAdmin.style.display = 'inline-flex';
+                cambiarTab('adminPanel');
+            } else if (usuarioActual.rol === 'paciente') {
+                if (btnCita) btnCita.style.display = 'inline-flex';
+                if (btnConsulta) btnConsulta.style.display = 'inline-flex';
+                if (btnLab) btnLab.style.display = 'inline-flex';
+                if (tabAdmin) tabAdmin.style.display = 'none';
+                cargarCitas();
+            } else if (usuarioActual.rol === 'medico') {
+                if (btnCita) btnCita.style.display = 'none';
+                if (btnConsulta) btnConsulta.style.display = 'none';
+                if (btnLab) btnLab.style.display = 'none';
+                if (tabAdmin) tabAdmin.style.display = 'none';
+                cargarCitas();
+            }
+            cargarPerfil();
+        }
+
+        function cerrarSesion() {
+            usuarioActual = null;
+            esAdmin = false;
+            document.getElementById('loginScreen').style.display = 'block';
+            document.getElementById('mainScreen').style.display = 'none';
+            document.getElementById('loginEmail').value = '';
+            document.getElementById('loginPass').value = '';
+        }
+
+        // ===== PERFIL =====
+        function cargarPerfil() {
+            if (!usuarioActual) return;
+            let html = `<p><strong>Nombre:</strong> ${esc(usuarioActual.nombre)}</p>`;
+            html += `<p><strong>Email:</strong> ${esc(usuarioActual.email)}</p>`;
+            html += `<p><strong>Teléfono:</strong> ${esc(usuarioActual.telefono || 'No registrado')}</p>`;
+            html += `<p><strong>Rol:</strong> ${usuarioActual.rol === 'medico' ? 'Médico' : usuarioActual.rol === 'admin' ? 'Administrador' : 'Paciente'}</p>`;
+            if (usuarioActual.rol === 'medico') {
+                html += `<p><strong>Especialidad:</strong> ${esc(usuarioActual.especialidad || 'General')}</p>`;
+                html += `<p><strong>Ubicación:</strong> ${esc(usuarioActual.ubicacion || 'No especificada')}</p>`;
+            } else if (usuarioActual.rol === 'paciente') {
+                html += `<p><strong>Documento:</strong> ${esc(usuarioActual.docPaciente || 'No registrado')}</p>`;
+                html += `<p><strong>Ubicación:</strong> ${esc(usuarioActual.ubicacion || 'No especificada')}</p>`;
+            }
+            document.getElementById('perfilInfo').innerHTML = html;
+        }
+
+        // ===== CITAS =====
+        async function cargarCitas() {
+            const lista = document.getElementById('listaCitas');
+            if (!lista) return;
+            let citas = await dbGetAll('citas');
+            
+            if (!esAdmin) {
+                if (usuarioActual.rol === 'medico') {
+                    citas = citas.filter(c => c.medicoId === usuarioActual.id);
+                } else if (usuarioActual.rol === 'paciente') {
+                    citas = citas.filter(c => c.pacienteId === usuarioActual.id);
+                }
+            }
+            
+            citas.sort((a, b) => new Date(b.fechaCreacion) - new Date(a.fechaCreacion));
+            
+            if (citas.length === 0) {
+                lista.innerHTML = '<div class="empty">📅 No hay citas programadas</div>';
+                return;
+            }
+            
+            lista.innerHTML = citas.map(c => `
+                <div class="lista-item">
+                    <div style="flex:1;">
+                        <strong>${esc(c.especialidad)}</strong> — Dr(a). ${esc(c.medicoNombre || 'Por asignar')}
+                        <br><small>👤 Paciente: ${esc(c.pacienteNombre)}</small>
+                        <br><small>📅 ${fecha(c.fechaCita)} | 📍 ${esc(c.ubicacion || '')}</small>
+                        ${c.motivo ? `<br><small>📝 ${esc(c.motivo)}</small>` : ''}
+                    </div>
+                    <span class="badge ${c.estado === 'confirmada' ? 'badge-confirmada' : 'badge-pendiente'}">${c.estado}</span>
+                    ${usuarioActual.rol === 'medico' && c.estado === 'pendiente' ? 
+                        `<button class="btn btn-verde" onclick="confirmarCita(${c.id})" style="font-size:0.7rem;">✅ Confirmar</button>` : ''}
+                </div>
+            `).join('');
+        }
+
+        async function confirmarCita(id) {
+            const cita = await dbGet('citas', id);
+            if (cita) {
+                cita.estado = 'confirmada';
+                await dbPut('citas', cita);
+                toast('✅ Cita confirmada', 'success');
+                cargarCitas();
+            }
+        }
+
+        async function agendarCita() {
+            if (usuarioActual.rol !== 'paciente') return toast('Solo pacientes pueden agendar citas', 'error');
+            
+            const medicos = (await dbGetAll('usuarios')).filter(u => u.rol === 'medico');
+            if (medicos.length === 0) return toast('No hay médicos disponibles', 'error');
+            
+            mostrarModal(`
+                <div class="modal-header">
+                    <h3>📅 Agendar Nueva Cita</h3>
+                    <button class="modal-close" onclick="cerrarModal()">✕</button>
+                </div>
+                <form onsubmit="guardarCita(event)">
+                    <div class="form-group">
+                        <label>Especialidad</label>
+                        <select id="citaEspecialidad" onchange="filtrarMedicos()" required>
+                            <option value="">Seleccione...</option>
+                            ${[...new Set(medicos.map(m => m.especialidad))].map(e => `<option>${esc(e)}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Médico</label>
+                        <select id="citaMedico" required></select>
+                    </div>
+                    <div class="form-group">
+                        <label>Fecha y Hora</label>
+                        <input type="datetime-local" id="citaFecha" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Motivo de Consulta</label>
+                        <textarea id="citaMotivo" rows="2"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-azul" style="width:100%;">Agendar Cita</button>
+                </form>
+            `);
+
+            window.medicosDisponibles = medicos;
+        }
+
+        function filtrarMedicos() {
+            const esp = document.getElementById('citaEspecialidad').value;
+            const select = document.getElementById('citaMedico');
+            select.innerHTML = window.medicosDisponibles
+                .filter(m => m.especialidad === esp)
+                .map(m => `<option value="${m.id}">Dr(a). ${esc(m.nombre)} — ${esc(m.ubicacion || '')}</option>`)
+                .join('');
+        }
+
+        async function guardarCita(e) {
+            e.preventDefault();
+            const medicoId = Number(document.getElementById('citaMedico').value);
+            const medico = window.medicosDisponibles.find(m => m.id === medicoId);
+            
+            const cita = {
+                pacienteId: usuarioActual.id,
+                pacienteNombre: usuarioActual.nombre,
+                pacienteEmail: usuarioActual.email,
+                medicoId: medicoId,
+                medicoNombre: medico?.nombre || '',
+                medicoEmail: medico?.email || '',
+                especialidad: document.getElementById('citaEspecialidad').value,
+                fechaCita: document.getElementById('citaFecha').value,
+                motivo: document.getElementById('citaMotivo').value.trim(),
+                ubicacion: usuarioActual.ubicacion || '',
+                estado: 'pendiente',
+                fechaCreacion: new Date().toISOString()
+            };
+            
+            await dbAdd('citas', cita);
+            toast('✅ Cita agendada exitosamente', 'success');
+            cerrarModal();
+            cargarCitas();
+        }
+
+        // ===== CONSULTAS =====
+        async function cargarConsultas() {
+            const lista = document.getElementById('listaConsultas');
+            if (!lista) return;
+            let consultas = await dbGetAll('consultas');
+            
+            if (usuarioActual.rol === 'paciente') {
+                consultas = consultas.filter(c => c.pacienteId === usuarioActual.id);
+            }
+            
+            consultas.sort((a, b) => new Date(b.fechaCreacion) - new Date(a.fechaCreacion));
+            
+            if (consultas.length === 0) {
+                lista.innerHTML = '<div class="empty">📋 No hay consultas</div>';
+                return;
+            }
+            
+            lista.innerHTML = consultas.map(c => `
+                <div class="lista-item">
+                    <div style="flex:1;">
+                        <strong>${esc(c.pacienteNombre)}</strong>
+                        <br><small>${esc(c.sintomas?.substring(0, 80) || 'Sin síntomas')}</small>
+                        <br><small>${fecha(c.fechaCreacion)}</small>
+                    </div>
+                    <span class="badge badge-${c.estado === 'pendiente' ? 'pendiente' : 'confirmada'}">${c.estado || 'pendiente'}</span>
+                    ${usuarioActual.rol === 'medico' && c.estado === 'pendiente' ? 
+                        `<button class="btn btn-azul" onclick="atenderConsulta(${c.id})" style="font-size:0.7rem;">👨‍⚕️ Atender</button>` : ''}
+                </div>
+            `).join('');
+        }
+
+        async function nuevaConsulta() {
+            if (usuarioActual.rol !== 'paciente') return toast('Solo pacientes', 'error');
+            
+            mostrarModal(`
+                <div class="modal-header">
+                    <h3>📋 Nueva Consulta</h3>
+                    <button class="modal-close" onclick="cerrarModal()">✕</button>
+                </div>
+                <form onsubmit="guardarConsulta(event)">
+                    <div class="form-group">
+                        <label>Nombre</label>
+                        <input type="text" value="${esc(usuarioActual.nombre)}" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label>Síntomas</label>
+                        <textarea id="consSintomas" rows="4" required placeholder="Describa sus síntomas..."></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-azul" style="width:100%;">Enviar Consulta</button>
+                </form>
+            `);
+        }
+
+        async function guardarConsulta(e) {
+            e.preventDefault();
+            const consulta = {
+                pacienteId: usuarioActual.id,
+                pacienteNombre: usuarioActual.nombre,
+                pacienteEmail: usuarioActual.email,
+                sintomas: document.getElementById('consSintomas').value.trim(),
+                estado: 'pendiente',
+                fechaCreacion: new Date().toISOString()
+            };
+            await dbAdd('consultas', consulta);
+            toast('✅ Consulta enviada', 'success');
+            cerrarModal();
+            cargarConsultas();
+        }
+
+        async function atenderConsulta(id) {
+            const consulta = await dbGet('consultas', id);
+            if (!consulta) return;
+            
+            mostrarModal(`
+                <div class="modal-header">
+                    <h3>👨‍⚕️ Atender Consulta</h3>
+                    <button class="modal-close" onclick="cerrarModal()">✕</button>
+                </div>
+                <p><strong>Paciente:</strong> ${esc(consulta.pacienteNombre)}</p>
+                <p><strong>Síntomas:</strong> ${esc(consulta.sintomas)}</p>
+                <form onsubmit="enviarReceta(event, ${consulta.id})">
+                    <div class="form-group">
+                        <label>Diagnóstico</label>
+                        <textarea id="recDiagnostico" rows="2" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Medicamentos Recetados</label>
+                        <textarea id="recMedicamentos" rows="3" required placeholder="Ej: Ibuprofeno 400mg cada 8 horas por 5 días"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Recomendaciones</label>
+                        <textarea id="recRecomendaciones" rows="2"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-verde" style="width:100%;">💊 Enviar Receta y Notificar</button>
+                </form>
+            `);
+        }
+
+        async function enviarReceta(e, consultaId) {
+            e.preventDefault();
+            const consulta = await dbGet('consultas', consultaId);
+            
+            const receta = {
+                pacienteId: consulta.pacienteId,
+                pacienteNombre: consulta.pacienteNombre,
+                pacienteEmail: consulta.pacienteEmail,
+                medicoId: usuarioActual.id,
+                medicoNombre: usuarioActual.nombre,
+                diagnostico: document.getElementById('recDiagnostico').value.trim(),
+                medicamentos: document.getElementById('recMedicamentos').value.trim(),
+                recomendaciones: document.getElementById('recRecomendaciones').value.trim(),
+                fecha: new Date().toISOString()
+            };
+            
+            await dbAdd('recetas', receta);
+            consulta.estado = 'atendida';
+            await dbPut('consultas', consulta);
+            
+            toast(`✅ Receta enviada. Se notificará a ${consulta.pacienteEmail}`, 'success');
+            console.log(`📧 SIMULACIÓN EMAIL a ${consulta.pacienteEmail}:`, receta);
+            cerrarModal();
+            cargarConsultas();
+            cargarRecetas();
+        }
+
+        // ===== LABORATORIOS =====
+        async function cargarLaboratorios() {
+            const lista = document.getElementById('listaLaboratorios');
+            if (!lista) return;
+            let labs = await dbGetAll('laboratorios');
+            
+            if (usuarioActual.rol === 'paciente') {
+                labs = labs.filter(l => l.pacienteId === usuarioActual.id);
+            }
+            
+            labs.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+            
+            lista.innerHTML = labs.length === 0 ? 
+                '<div class="empty">🧪 No hay laboratorios</div>' :
+                labs.map(l => `
+                    <div class="lista-item">
+                        <div style="flex:1;">
+                            <strong>${esc(l.tipo)}</strong> — ${esc(l.pacienteNombre)}
+                            <br><small>${fecha(l.fecha)}</small>
+                        </div>
+                        <button class="btn btn-azul" onclick="verLaboratorio(${l.id})" style="font-size:0.7rem;">Ver</button>
+                    </div>
+                `).join('');
+        }
+
+        async function subirLaboratorio() {
+            if (usuarioActual.rol !== 'paciente') return toast('Solo pacientes', 'error');
+            
+            mostrarModal(`
+                <div class="modal-header">
+                    <h3>🧪 Cargar Laboratorio</h3>
+                    <button class="modal-close" onclick="cerrarModal()">✕</button>
+                </div>
+                <form onsubmit="guardarLaboratorio(event)">
+                    <div class="form-group">
+                        <label>Tipo</label>
+                        <select id="labTipo">
+                            <option>Hemograma Completo</option>
+                            <option>Perfil Lipídico</option>
+                            <option>Glucosa en Sangre</option>
+                            <option>Función Renal</option>
+                            <option>Función Hepática</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Resultados</label>
+                        <textarea id="labResultados" rows="4" required placeholder="Ingrese los valores..."></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-azul" style="width:100%;">Guardar</button>
+                </form>
+            `);
+        }
+
+        async function guardarLaboratorio(e) {
+            e.preventDefault();
+            await dbAdd('laboratorios', {
+                pacienteId: usuarioActual.id,
+                pacienteNombre: usuarioActual.nombre,
+                tipo: document.getElementById('labTipo').value,
+                resultados: document.getElementById('labResultados').value.trim(),
+                fecha: new Date().toISOString()
+            });
+            toast('✅ Laboratorio guardado', 'success');
+            cerrarModal();
+            cargarLaboratorios();
+        }
+
+        async function verLaboratorio(id) {
+            const lab = await dbGet('laboratorios', id);
+            if (lab) {
+                mostrarModal(`
+                    <div class="modal-header">
+                        <h3>🧪 ${esc(lab.tipo)}</h3>
+                        <button class="modal-close" onclick="cerrarModal()">✕</button>
+                    </div>
+                    <p><strong>Paciente:</strong> ${esc(lab.pacienteNombre)}</p>
+                    <p><strong>Fecha:</strong> ${fecha(lab.fecha)}</p>
+                    <div class="receta-box">${esc(lab.resultados)}</div>
+                `);
+            }
+        }
+
+        // ===== RECETAS =====
+        async function cargarRecetas() {
+            const lista = document.getElementById('listaRecetas');
+            if (!lista) return;
+            let recetas = await dbGetAll('recetas');
+            
+            if (usuarioActual.rol === 'paciente') {
+                recetas = recetas.filter(r => r.pacienteId === usuarioActual.id);
+            } else if (usuarioActual.rol === 'medico') {
+                recetas = recetas.filter(r => r.medicoId === usuarioActual.id);
+            }
+            
+            recetas.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+            
+            lista.innerHTML = recetas.length === 0 ?
+                '<div class="empty">💊 No hay recetas</div>' :
+                recetas.map(r => `
+                    <div class="lista-item">
+                        <div style="flex:1;">
+                            <strong>${esc(r.pacienteNombre)}</strong>
+                            <br><small>👨‍⚕️ Dr(a). ${esc(r.medicoNombre)}</small>
+                            <br><small>💊 ${esc(r.medicamentos?.substring(0, 60) || '')}</small>
+                        </div>
+                        <small>${fecha(r.fecha)}</small>
+                        <button class="btn btn-azul" onclick="verReceta(${r.id})" style="font-size:0.7rem;">📄</button>
+                    </div>
+                `).join('');
+        }
+
+        async function verReceta(id) {
+            const r = await dbGet('recetas', id);
+            if (r) {
+                mostrarModal(`
+                    <div class="modal-header">
+                        <h3>💊 Receta Médica</h3>
+                        <button class="modal-close" onclick="cerrarModal()">✕</button>
+                    </div>
+                    <p><strong>Paciente:</strong> ${esc(r.pacienteNombre)}</p>
+                    <p><strong>Médico:</strong> Dr(a). ${esc(r.medicoNombre)}</p>
+                    <p><strong>Fecha:</strong> ${fecha(r.fecha)}</p>
+                    <div class="receta-box"><strong>Diagnóstico:</strong><br>${esc(r.diagnostico)}</div>
+                    <div class="receta-box"><strong>Medicamentos:</strong><br>${esc(r.medicamentos)}</div>
+                    <div class="receta-box"><strong>Recomendaciones:</strong><br>${esc(r.recomendaciones)}</div>
+                    <p style="font-size:0.8rem;">📧 Enviado a: ${esc(r.pacienteEmail)}</p>
+                `);
+            }
+        }
+
+        // ===== ADMIN =====
+        async function cargarAdminUsuarios() {
+            const lista = document.getElementById('listaAdminUsuarios');
+            if (!lista) return;
+            const usuarios = await dbGetAll('usuarios');
+            lista.innerHTML = usuarios.map(u => `
+                <div class="lista-item">
+                    <div style="flex:1;">
+                        <strong>${esc(u.nombre)}</strong> — ${u.rol}
+                        <br><small>📧 ${esc(u.email)} | 📞 ${esc(u.telefono)}</small>
+                    </div>
+                    <button class="btn btn-rojo" onclick="adminEliminarUsuario(${u.id})" style="font-size:0.7rem;">🗑️</button>
+                </div>
+            `).join('');
+        }
+
+        function adminCrearUsuario() {
+            mostrarModal(`
+                <div class="modal-header">
+                    <h3>Crear Usuario (Admin)</h3>
+                    <button class="modal-close" onclick="cerrarModal()">✕</button>
+                </div>
+                <form onsubmit="adminGuardarUsuario(event)">
+                    <div class="form-group"><label>Nombre</label><input type="text" id="adminNombre" required></div>
+                    <div class="form-group"><label>Email</label><input type="email" id="adminEmail" required></div>
+                    <div class="form-group"><label>Rol</label><select id="adminRol"><option>medico</option><option>paciente</option></select></div>
+                    <button type="submit" class="btn btn-azul" style="width:100%;">Crear</button>
+                </form>
+            `);
+        }
+
+        async function adminGuardarUsuario(e) {
+            e.preventDefault();
+            await dbAdd('usuarios', {
+                nombre: document.getElementById('adminNombre').value.trim(),
+                email: document.getElementById('adminEmail').value.trim(),
+                password: '123456',
+                rol: document.getElementById('adminRol').value,
+                telefono: '000',
+                fechaRegistro: new Date().toISOString()
+            });
+            toast('✅ Usuario creado', 'success');
+            cerrarModal();
+            cargarAdminUsuarios();
+        }
+
+        async function adminEliminarUsuario(id) {
+            if (confirm('¿Eliminar este usuario?')) {
+                await dbDelete('usuarios', id);
+                toast('🗑️ Usuario eliminado', 'success');
+                cargarAdminUsuarios();
+            }
+        }
+
+        async function adminReiniciarDB() {
+            if (confirm('⚠️ ¿Reiniciar TODA la base de datos?')) {
+                const stores = ['usuarios', 'citas', 'consultas', 'laboratorios', 'recetas'];
+                for (const store of stores) {
+                    const all = await dbGetAll(store);
+                    for (const item of all) {
+                        await dbDelete(store, item.id);
+                    }
+                }
+                toast('✅ Base de datos reiniciada', 'success');
+                cargarAdminUsuarios();
+            }
+        }
+
+        // ===== INICIALIZACIÓN =====
+        async function init() {
+            await abrirDB();
+            
+            // Crear datos demo si la BD está vacía
+            const usuarios = await dbGetAll('usuarios');
+            if (usuarios.length === 0) {
+                await dbAdd('usuarios', {
+                    nombre: 'Dr. Carlos Martínez',
+                    email: 'medico@rural.com',
+                    password: '123456',
+                    rol: 'medico',
+                    especialidad: 'Medicina General',
+                    ubicacion: 'Antioquia',
+                    telefono: '3001112233',
+                    fechaRegistro: new Date().toISOString()
+                });
+                await dbAdd('usuarios', {
+                    nombre: 'María García López',
+                    email: 'paciente@rural.com',
+                    password: '123456',
+                    rol: 'paciente',
+                    docPaciente: 'CC 12345678',
+                    ubicacion: 'Chocó',
+                    telefono: '3105556677',
+                    fechaNac: '1990-05-15',
+                    fechaRegistro: new Date().toISOString()
+                });
+                console.log('✅ Datos demo creados');
+            }
+            
+            console.log('🏥 SaludRural 360 v3.0 - Listo');
+            console.log('📧 medico@rural.com / paciente@rural.com / admin@rural360.com');
+            console.log('🔑 Contraseña: 123456');
+        }
+        
+        init();
+
+        // Cerrar modal al hacer clic fuera
+        document.getElementById('modalOverlay').addEventListener('click', function(e) {
+            if (e.target === this) cerrarModal();
+        });
+    </script>
+</body>
+</html>
